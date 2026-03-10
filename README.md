@@ -39,6 +39,8 @@ Once completed, submit one of the following:
 - **short video** recording your work.
 - **Github Link** where your assessment result were pushed.
 
+**My submission – video:** [Screen Recording 2026-03-10 – Google Drive](https://drive.google.com/file/d/1wZsMBxZaOMlEo-JCK65B9FYBMNTNKLmh/view?usp=sharing)
+
 ---
 
 ## Quick Start
