@@ -9,8 +9,17 @@ const statsRouter = require('./routes/stats');
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 4001;
 
-// Middleware
-app.use(cors({ origin: `http://localhost:${PORT}` }));
+// Middleware — allow frontend dev server (Vite typically on 3000) and same-origin
+const allowedOrigins = [
+  'http://localhost:3000',
+  `http://localhost:${PORT}`,
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(null, false);
+  },
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 

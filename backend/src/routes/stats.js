@@ -2,22 +2,44 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
-const DATA_PATH = path.join(__dirname, '../../data/items.json');
+const DATA_PATH = path.join(__dirname, '../../../data/items.json');
 
-// GET /api/stats
-router.get('/', (req, res, next) => {
-  fs.readFile(DATA_PATH, (err, raw) => {
-    if (err) return next(err);
+let cachedStats = null;
 
-    const items = JSON.parse(raw);
-    // Intentional heavy CPU calculation
-    const stats = {
-      total: items.length,
-      averagePrice: items.reduce((acc, cur) => acc + cur.price, 0) / items.length
-    };
+function computeStats(items) {
+  if (!items.length) {
+    return { total: 0, averagePrice: 0 };
+  }
+  return {
+    total: items.length,
+    averagePrice: items.reduce((acc, cur) => acc + cur.price, 0) / items.length,
+  };
+}
 
-    res.json(stats);
-  });
+async function refreshStats() {
+  const raw = await fs.promises.readFile(DATA_PATH, 'utf8');
+  const items = JSON.parse(raw);
+  cachedStats = computeStats(items);
+  return cachedStats;
+}
+
+// Invalidate cache when items.json changes (write/create/rename)
+fs.watch(DATA_PATH, (eventType) => {
+  if (eventType === 'change' || eventType === 'rename') {
+    cachedStats = null;
+  }
+});
+
+// GET /api/stats — returns cached stats when valid, recomputes on cache miss or after file change
+router.get('/', async (req, res, next) => {
+  try {
+    if (cachedStats === null) {
+      await refreshStats();
+    }
+    res.json(cachedStats);
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;
